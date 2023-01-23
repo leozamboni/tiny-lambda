@@ -20,6 +20,9 @@ op:
 ;
 
 λx.λy.x+y λf.λz.f z λf.λz.f f z  -> ((x,y)=>x+y)(1,2)
-λx.λy.x -> (x,y)=>x
-λx.λy.y -> (x,y)=>y
+λx.λy.x -> ((x,y)=>x)
+λx.λy.y -> ((x,y)=>y)
+
+- Church numerals not yet implemented
+
 ```
