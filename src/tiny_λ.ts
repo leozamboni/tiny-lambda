@@ -1,5 +1,5 @@
 const File: { in: string; out: string; err: string } = {
-  in: "λx.λy.x+y",
+  in: process.argv[2],
   out: "",
   err: "",
 };
@@ -9,6 +9,7 @@ enum T {
   op,
   sym,
   lb,
+  numb,
 }
 const Err = {
   unex_token: (token) => `Unexpected ${token.k} in line ${token.l}\n`,
@@ -18,6 +19,7 @@ type Token_t = { k: string; t: T; l: number };
 const Token = {
   create: (k, t, l): Token_t => Object.create({ k, t, l }),
   type: (k): T => {
+    if (/[0-9]/.test(k)) return T.numb;
     switch (k) {
       case "+":
       case "-":
@@ -66,6 +68,7 @@ const Scanner = {
         Scanner.l++;
         break;
     }
+    Scanner.k = Scanner.k.replace(/\s+/g, "");
     Scanner.token = Token.create(Scanner.k, Scanner.t, Scanner.l);
     Parser.out.push(Scanner.token);
     return Scanner.token;
@@ -125,8 +128,17 @@ const Gen = {
   run: () => {
     if (!Parser.out[Gen.i]) return;
     switch (Parser.out[Gen.i].t) {
+      case T.numb:
+        if (!Gen.checkAhead(1) || Gen.checkAhead(1)?.t === T.lb) {
+          File.out += `${Parser.out[Gen.i].k})`;
+        } else if (Gen.checkBehind(1)?.t === T.sym) {
+          File.out += `)(${Parser.out[Gen.i].k},`;
+        } else {
+          File.out += `${Parser.out[Gen.i].k},`;
+        }
+        break;
       case T.λ:
-        if (!Gen.checkBehind(1)) {
+        if (!Gen.checkBehind(1) || Gen.checkBehind(1)?.t === T.lb) {
           File.out += "((";
         } else {
           File.out += ",";
@@ -136,7 +148,11 @@ const Gen = {
         File.out += Parser.out[Gen.i].k;
         break;
       case T.lb:
-        File.out += `)\n`;
+        if (Gen.checkBehind(1)?.t === T.numb) {
+          File.out += `\n`;
+        } else {
+          File.out += `)\n`;
+        }
         break;
       case T.sym:
         if (!Gen.checkAhead(1) && Gen.checkBehind(1)?.t === T.dot) {
