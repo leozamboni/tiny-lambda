@@ -6,12 +6,23 @@ Ast:
 
 ```js
 λ:
-| 'λ' sym '.' exp args
+| 'λ' sym sepator
+| 'λ' sym sepator exp
+;
+
+sepator:
+| ','
+| '.'
+;
+
+call:
+| sym '()'
+| sym args
 ;
 
 args:
-| args
-| sym
+| '(' sym ')'
+| '(' sym ')' args
 ;
 
 exp:
@@ -36,4 +47,4 @@ AND := λx,λy.FALSE(x)(y) -> AND=x=>y=>FALSE(x)(y)
 
 ```
 
-- Church numerals not yet implemented
+TODO: - Church numerals
