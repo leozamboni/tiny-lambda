@@ -29,9 +29,10 @@ op:
 Examples:
 
 ```js
-λx.λy.x+y λf.λz.f z λf.λz.f f z -> ((x,y)=>x+y)(1,2)
-λx.λy.x -> ((x,y)=>x)
-λx.λy.y -> ((x,y)=>y)
+FUNC := λx,λy.x+y -> FUNC=x=>y=>x+y
+TRUE := λx,λy.x -> TRUE=x=>y=>x
+FALSE := λx,λy.y -> FALSE=x=>y=>y
+AND := λx,λy.FALSE(x)(y) -> AND=x=>y=>FALSE(x)(y)
 
 ```
 

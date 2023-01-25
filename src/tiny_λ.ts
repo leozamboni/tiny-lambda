@@ -10,6 +10,12 @@ enum T {
   sym,
   lb,
   numb,
+  comma,
+  colon,
+  assig,
+  lparen,
+  rparen,
+  call,
 }
 const Err = {
   unex_token: (token) => `Unexpected ${token.k} in line ${token.l}\n`,
@@ -28,8 +34,16 @@ const Token = {
         return T.op;
       case ".":
         return T.dot;
+      case ":":
+        return T.colon;
+      case ",":
+        return T.comma;
       case "λ":
         return T.λ;
+      case "(":
+        return T.lparen;
+      case ")":
+        return T.rparen;
       case "\n":
         return T.lb;
       default:
@@ -49,26 +63,48 @@ const Scanner = {
   sym: () => {
     let val = "";
     do {
-      val += Scanner.k;
+      if (File.in[Scanner.i] !== " ") {
+        val += File.in[Scanner.i];
+      }
       Scanner.inc();
-      Scanner.k = File.in[Scanner.i];
-    } while (Scanner.k && Token.type(Scanner.k) === T.sym);
+    } while (File.in[Scanner.i] && Token.type(File.in[Scanner.i]) === T.sym);
     Scanner.dec();
     return val;
+  },
+  assig: () => {
+    if (File.in[Scanner.i + 1] === "=") {
+      Scanner.inc();
+      Scanner.t = T.assig;
+      return ":=";
+    }
+    return Scanner.k;
+  },
+  call: () => {
+    if (File.in[Scanner.i + 1] === "(") {
+      Scanner.t = T.call;
+    }
+    return Scanner.k;
   },
   scan: () => {
     if (Scanner.isEOF()) return null;
     Scanner.k = File.in[Scanner.i];
+    if (Scanner.k === " ") {
+      Scanner.inc();
+      return Scanner.scan();
+    }
     Scanner.t = Token.type(Scanner.k);
     switch (Scanner.t) {
+      case T.colon:
+        Scanner.k = Scanner.assig();
+        break;
       case T.sym:
         Scanner.k = Scanner.sym();
+        Scanner.k = Scanner.call();
         break;
       case T.lb:
         Scanner.l++;
         break;
     }
-    Scanner.k = Scanner.k.replace(/\s+/g, "");
     Scanner.token = Token.create(Scanner.k, Scanner.t, Scanner.l);
     Parser.out.push(Scanner.token);
     return Scanner.token;
@@ -78,7 +114,11 @@ const Ast = {
   λ: (token) => {
     token = N(token, T.λ);
     token = N(token, T.sym);
-    token = N(token, T.dot);
+    if (token?.t === T.comma) {
+      token = N(token, T.comma);
+    } else {
+      token = N(token, T.dot);
+    }
     return token;
   },
   exp: (token) => {
@@ -86,7 +126,23 @@ const Ast = {
     if (token?.t === T.op) {
       token = N(token, T.op);
       token = N(token, T.sym);
+    } else if (token?.t === T.assig) {
+      token = N(token, T.assig);
     }
+    return token;
+  },
+  args: (token) => {
+    token = N(token, T.lparen);
+    token = N(token, T.sym);
+    token = N(token, T.rparen);
+    if (token?.t === T.lparen) {
+      token = Ast.args(token);
+    }
+    return token;
+  },
+  call: (token) => {
+    token = N(token, T.call);
+    token = Ast.args(token);
     return token;
   },
 };
@@ -109,10 +165,13 @@ const Parser = {
         Scanner.inc();
         break;
       case T.λ:
-        token = Ast["λ"](token);
+        token = Ast.λ(token);
         break;
       case T.sym:
-        token = Ast["exp"](token);
+        token = Ast.exp(token);
+        break;
+      case T.call:
+        token = Ast.call(token);
         break;
     }
     if (!token) token = Scanner.scan();
@@ -129,47 +188,28 @@ const Gen = {
     if (!Parser.out[Gen.i]) return;
     switch (Parser.out[Gen.i].t) {
       case T.numb:
-        if (!Gen.checkAhead(1) || Gen.checkAhead(1)?.t === T.lb) {
-          File.out += `${Parser.out[Gen.i].k})`;
-        } else if (Gen.checkBehind(1)?.t === T.sym) {
-          File.out += `)(${Parser.out[Gen.i].k},`;
-        } else {
-          File.out += `${Parser.out[Gen.i].k},`;
-        }
-        break;
-      case T.λ:
-        if (!Gen.checkBehind(1) || Gen.checkBehind(1)?.t === T.lb) {
-          File.out += "((";
-        } else {
-          File.out += ",";
-        }
-        break;
       case T.op:
+      case T.lb:
+      case T.lparen:
+      case T.rparen:
+      case T.sym:
+      case T.call:
         File.out += Parser.out[Gen.i].k;
         break;
-      case T.lb:
-        if (Gen.checkBehind(1)?.t === T.numb) {
-          File.out += `\n`;
-        } else {
-          File.out += `)\n`;
+      case T.λ:
+        if (Gen.checkBehind(1)?.t !== T.assig) {
+          File.out += "=>";
         }
         break;
-      case T.sym:
-        if (!Gen.checkAhead(1) && Gen.checkBehind(1)?.t === T.dot) {
-          File.out += `)=>${Parser.out[Gen.i].k})`;
-        } else if (!Gen.checkAhead(1)) {
-          File.out += `${Parser.out[Gen.i].k})`;
-        } else if (Gen.checkBehind(1)?.t === T.dot) {
-          File.out += `)=>${Parser.out[Gen.i].k}`;
-        } else if (Gen.checkBehind(1)?.t !== T.λ) {
-          File.out += Parser.out[Gen.i].k;
-        }
+      case T.assig:
+        File.out += "=";
         break;
       case T.dot:
-        if (!Gen.checkAhead(1)) {
-          File.out += `${Parser.out[Gen.i - 1].k}))`;
-        } else {
-          File.out += Parser.out[Gen.i - 1].k;
+        File.out += "=>";
+        break;
+      case T.comma:
+        if (Gen.checkAhead(1)?.t !== T.λ) {
+          File.out += ",";
         }
         break;
     }

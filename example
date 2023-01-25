@@ -1,3 +1,4 @@
-λx.λy.x+y 1 2
-λx.λy.x
-λx.λy.y
+FUNC := λx,λy.x+y
+TRUE := λx,λy.x
+FALSE := λx,λy.y
+AND := λx,λy.FALSE(x)(y)
