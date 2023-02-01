@@ -1,40 +1,34 @@
 A tiny lambda calculus compiler
 
-It works? I don't know, just try `pnpm execute`
+It works? I don't know, just `pnpm execute`
 
-Ast:
+Syntax:
 
 ```js
 λ:
 | 'λ' sym sepator
 | 'λ' sym sepator exp
-;
 
 sepator:
 | ','
 | '.'
-;
 
 call:
 | sym '()'
 | sym args
-;
 
 args:
 | '(' sym ')'
 | '(' sym ')' args
-;
 
 exp:
 | exp op exp
-;
 
 op:
 | '+'
 | '-'
 | '*'
 | '/'
-;
 ```
 
 Examples:
