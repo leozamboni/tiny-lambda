@@ -6,10 +6,10 @@ Syntax:
 
 ```js
 λ:
-| 'λ' sym sepator
-| 'λ' sym sepator exp
+| 'λ' sym commaDot
+| 'λ' sym commaDot exp
 
-sepator:
+commaDot:
 | ','
 | '.'
 
