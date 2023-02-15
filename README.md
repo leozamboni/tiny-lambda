@@ -5,24 +5,22 @@ It works? I don't know, just `pnpm execute`
 Syntax:
 
 ```js
-λ:
-| 'λ' sym '.'
+λ -> 'λ' sym '.'
 | 'λ' sym ',' λ
-| 'λ' sym '.' exp
+| 'λ' sym '.' body
 
-call:
-| sym '()'
+body -> call
+| exp
+
+call -> sym '()'
 | sym args
 
-args:
-| '(' sym ')'
+args -> '(' sym ')'
 | '(' sym ')' args
 
-exp:
-| exp op exp
+exp -> exp op exp
 
-op:
-| '+'
+op: -> '+'
 | '-'
 | '*'
 | '/'
