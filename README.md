@@ -6,12 +6,9 @@ Syntax:
 
 ```js
 λ:
-| 'λ' sym commaDot
-| 'λ' sym commaDot exp
-
-commaDot:
-| ','
-| '.'
+| 'λ' sym '.'
+| 'λ' sym ',' λ
+| 'λ' sym '.' exp
 
 call:
 | sym '()'
