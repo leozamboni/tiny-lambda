@@ -20,7 +20,7 @@ args -> '(' sym ')'
 
 exp -> exp op exp
 
-op: -> '+'
+op -> '+'
 | '-'
 | '*'
 | '/'
